@@ -11,16 +11,24 @@ def cosyvoice_example():
     # sft usage
     print(cosyvoice.list_available_spks())
     # change stream=True for chunk stream inference
-    for i, j in enumerate(cosyvoice.inference_sft('你好，我是通义生成式语音大模型，请问有什么可以帮您的吗？', '中文女', stream=False)):
+    sft_text = '你好，我是通义生成式语音大模型，请问有什么可以帮您的吗？'
+    for i, j in enumerate(cosyvoice.inference_sft(sft_text, '中文女', stream=False)):
         torchaudio.save('sft_{}.wav'.format(i), j['tts_speech'], cosyvoice.sample_rate)
 
     cosyvoice = AutoModel(model_dir='pretrained_models/CosyVoice-300M')
     # zero_shot usage
-    for i, j in enumerate(cosyvoice.inference_zero_shot('收到好友从远方寄来的生日礼物，那份意外的惊喜与深深的祝福让我心中充满了甜蜜的快乐，笑容如花儿般绽放。', '希望你以后能够做的比我还好呦。', './asset/zero_shot_prompt.wav')):
+    zero_shot_text = '收到好友从远方寄来的生日礼物，那份意外的惊喜与深深的祝福让我心中充满了甜蜜的快乐，笑容如花儿般绽放。'
+    for i, j in enumerate(cosyvoice.inference_zero_shot(zero_shot_text, '希望你以后能够做的比我还好呦。', './asset/zero_shot_prompt.wav')):
         torchaudio.save('zero_shot_{}.wav'.format(i), j['tts_speech'], cosyvoice.sample_rate)
     # cross_lingual usage, <|zh|><|en|><|ja|><|yue|><|ko|> for Chinese/English/Japanese/Cantonese/Korean
-    for i, j in enumerate(cosyvoice.inference_cross_lingual('<|en|>And then later on, fully acquiring that company. So keeping management in line, interest in line with the asset that\'s coming into the family is a reason why sometimes we don\'t buy the whole thing.',
-                                                            './asset/cross_lingual_prompt.wav')):
+    cross_lingual_text = (
+        '<|en|>And then later on, fully acquiring that company. '
+        'So keeping management in line, interest in line with the asset '
+        'that\'s coming into the family is a reason why sometimes we don\'t buy the whole thing.'
+    )
+    for i, j in enumerate(cosyvoice.inference_cross_lingual(
+            cross_lingual_text,
+            './asset/cross_lingual_prompt.wav')):
         torchaudio.save('cross_lingual_{}.wav'.format(i), j['tts_speech'], cosyvoice.sample_rate)
     # vc usage
     for i, j in enumerate(cosyvoice.inference_vc('./asset/cross_lingual_prompt.wav', './asset/zero_shot_prompt.wav')):
@@ -28,8 +36,15 @@ def cosyvoice_example():
 
     cosyvoice = AutoModel(model_dir='pretrained_models/CosyVoice-300M-Instruct')
     # instruct usage, support <laughter></laughter><strong></strong>[laughter][breath]
-    for i, j in enumerate(cosyvoice.inference_instruct('在面对挑战时，他展现了非凡的<strong>勇气</strong>与<strong>智慧</strong>。', '中文男',
-                                                       'Theo \'Crimson\', is a fiery, passionate rebel leader. Fights with fervor for justice, but struggles with impulsiveness.<|endofprompt|>')):
+    instruct_text = '在面对挑战时，他展现了非凡的<strong>勇气</strong>与<strong>智慧</strong>。'
+    instruct_prompt = (
+        'Theo \'Crimson\', is a fiery, passionate rebel leader. '
+        'Fights with fervor for justice, but struggles with impulsiveness.<|endofprompt|>'
+    )
+    for i, j in enumerate(cosyvoice.inference_instruct(
+            instruct_text,
+            '中文男',
+            instruct_prompt)):
         torchaudio.save('instruct_{}.wav'.format(i), j['tts_speech'], cosyvoice.sample_rate)
 
 
@@ -83,22 +98,40 @@ def cosyvoice3_example():
         torchaudio.save('fine_grained_control_{}.wav'.format(i), j['tts_speech'], cosyvoice.sample_rate)
 
     # instruct usage, for supported control, check cosyvoice/utils/common.py#L28
-    for i, j in enumerate(cosyvoice.inference_instruct2('好少咯，一般系放嗰啲国庆啊，中秋嗰啲可能会咯。', 'You are a helpful assistant. 请用广东话表达。<|endofprompt|>',
-                                                        './asset/zero_shot_prompt.wav', stream=False)):
+    instruct_text = '好少咯，一般系放嗰啲国庆啊，中秋嗰啲可能会咯。'
+    instruct_prompt = 'You are a helpful assistant. 请用广东话表达。<|endofprompt|>'
+    for i, j in enumerate(cosyvoice.inference_instruct2(
+            instruct_text,
+            instruct_prompt,
+            './asset/zero_shot_prompt.wav', stream=False)):
         torchaudio.save('instruct_{}.wav'.format(i), j['tts_speech'], cosyvoice.sample_rate)
-    for i, j in enumerate(cosyvoice.inference_instruct2('收到好友从远方寄来的生日礼物，那份意外的惊喜与深深的祝福让我心中充满了甜蜜的快乐，笑容如花儿般绽放。', 'You are a helpful assistant. 请用尽可能快地语速说一句话。<|endofprompt|>',
-                                                        './asset/zero_shot_prompt.wav', stream=False)):
+    instruct_fast_text = '收到好友从远方寄来的生日礼物，那份意外的惊喜与深深的祝福让我心中充满了甜蜜的快乐，笑容如花儿般绽放。'
+    instruct_fast_prompt = 'You are a helpful assistant. 请用尽可能快地语速说一句话。<|endofprompt|>'
+    for i, j in enumerate(cosyvoice.inference_instruct2(
+            instruct_fast_text,
+            instruct_fast_prompt,
+            './asset/zero_shot_prompt.wav', stream=False)):
         torchaudio.save('instruct_{}.wav'.format(i), j['tts_speech'], cosyvoice.sample_rate)
 
     # hotfix usage
-    for i, j in enumerate(cosyvoice.inference_zero_shot('高管也通过电话、短信、微信等方式对报道[j][ǐ]予好评。', 'You are a helpful assistant.<|endofprompt|>希望你以后能够做的比我还好呦。',
-                                                        './asset/zero_shot_prompt.wav', stream=False)):
+    hotfix_text = '高管也通过电话、短信、微信等方式对报道[j][ǐ]予好评。'
+    hotfix_prompt = 'You are a helpful assistant.<|endofprompt|>希望你以后能够做的比我还好呦。'
+    for i, j in enumerate(cosyvoice.inference_zero_shot(
+            hotfix_text,
+            hotfix_prompt,
+            './asset/zero_shot_prompt.wav', stream=False)):
         torchaudio.save('hotfix_{}.wav'.format(i), j['tts_speech'], cosyvoice.sample_rate)
 
     # NOTE for Japanese usage, you must translate it to katakana.
     # 歴史的世界においては、過去は単に過ぎ去ったものではない、プラトンのいう如く非有が有である。 -> レキシ テキ セカイ ニ オイ テ ワ、カコ ワ タンニ スギサッ タ モノ デ ワ ナイ、プラトン ノ イウ ゴトク ヒ ユー ガ ユー デ アル。
-    for i, j in enumerate(cosyvoice.inference_cross_lingual('You are a helpful assistant.<|endofprompt|>レキシ テキ セカイ ニ オイ テ ワ、カコ ワ タンニ スギサッ タ モノ デ ワ ナイ、プラトン ノ イウ ゴトク ヒ ユー ガ ユー デ アル。',
-                                                            './asset/zero_shot_prompt.wav', stream=False)):
+    japanese_text = (
+        'You are a helpful assistant.<|endofprompt|>レキシ テキ セカイ ニ オイ テ ワ、'
+        'カコ ワ タンニ スギサッ タ モノ デ ワ ナイ、プラトン ノ イウ ゴトク '
+        'ヒ ユー ガ ユー デ アル。'
+    )
+    for i, j in enumerate(cosyvoice.inference_cross_lingual(
+            japanese_text,
+            './asset/zero_shot_prompt.wav', stream=False)):
         torchaudio.save('japanese_{}.wav'.format(i), j['tts_speech'], cosyvoice.sample_rate)
 
 

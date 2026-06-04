@@ -1,6 +1,7 @@
 import onnxruntime
-import torch, random
 import os
+import random
+import torch
 import torchaudio.compliance.kaldi as kaldi
 
 
@@ -15,11 +16,15 @@ class SpeechTokenExtractor():
                                                                      providers=[("CUDAExecutionProvider", {'device_id': self.local_rank})])
 
     def inference(self, feat, feat_lengths, device):
-        speech_token = self.speech_tokenizer_session.run(None,
-                                                    {self.speech_tokenizer_session.get_inputs()[0].name:
-                                                    feat.transpose(1, 2).detach().cpu().numpy(),
-                                                    self.speech_tokenizer_session.get_inputs()[1].name:
-                                                    feat_lengths.detach().cpu().numpy()})[0]
+        speech_token = self.speech_tokenizer_session.run(
+            None,
+            {
+                self.speech_tokenizer_session.get_inputs()[0].name:
+                    feat.transpose(1, 2).detach().cpu().numpy(),
+                self.speech_tokenizer_session.get_inputs()[1].name:
+                    feat_lengths.detach().cpu().numpy(),
+            },
+        )[0]
         return torch.tensor(speech_token).to(torch.int32).to(device), (feat_lengths / 4).to(torch.int32).to(device)
 
 
@@ -42,9 +47,12 @@ class EmbeddingExtractor():
                            dither=0,
                            sample_frequency=16000)
         feat = feat - feat.mean(dim=0, keepdim=True)
-        embedding = self.campplus_session.run(None,
-                                              {self.campplus_session.get_inputs()[0].name: feat.unsqueeze(dim=0).cpu().numpy()})[0].flatten().tolist()
+        embedding = self.campplus_session.run(
+            None,
+            {self.campplus_session.get_inputs()[0].name: feat.unsqueeze(dim=0).cpu().numpy()},
+        )[0].flatten().tolist()
         return torch.tensor(embedding).to(speech.device)
+
 
 # singleton mode, only initialized once
 onnx_path = os.environ.get('onnx_path')
